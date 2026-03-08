@@ -35,18 +35,18 @@ func hashSecureToken(token string) ([]byte, error) {
 	return hash.Sum(nil), nil
 }
 
-func GenerateMagicLink(email string, request *http.Request) error {
+func GenerateMagicLink(email string, request *http.Request) (string, error) {
 	token, err := generateSecureToken()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	hash, err := hashSecureToken(token)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	databaseSafeToken := string(hash)
+	databaseSafeToken := base64.RawURLEncoding.EncodeToString(hash)
 	
 	magicLinkToken := MagicLinkToken{
 		Email:		email,
@@ -58,15 +58,15 @@ func GenerateMagicLink(email string, request *http.Request) error {
 
 	db, err := database.GetDatabase()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = db.Create(&magicLinkToken).Error
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return token, nil
 }
 
 func ConsumeMagicLink(token string) (*user.User, error) {
@@ -75,7 +75,7 @@ func ConsumeMagicLink(token string) (*user.User, error) {
 		return nil, err
 	}
 
-	databaseSafeToken := string(hash)
+	databaseSafeToken := base64.RawURLEncoding.EncodeToString(hash)
 
 	// Query for hashed token against database
 	db, err := database.GetDatabase()

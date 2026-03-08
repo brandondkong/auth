@@ -1,0 +1,7 @@
+.env
+!.env.example
+
+# Go builds
+./main
+*.exe 
+*.out

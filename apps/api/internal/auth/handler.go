@@ -52,7 +52,7 @@ func createMagicLink(w http.ResponseWriter, r *http.Request) {
 
 
 func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
-	urlToken := chi.URLParam(r, "token")
+	urlToken := r.URL.Query().Get("token")
 	user, err := token.ConsumeMagicLink(urlToken)
 	buf := []byte{}
 

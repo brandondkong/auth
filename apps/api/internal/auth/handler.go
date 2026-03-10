@@ -11,7 +11,11 @@ import (
 )
 
 type CreateMagicLinkPayload struct {
-	Email	string
+	Email	string	`json:"email"`
+}
+
+type CreateMagicLinkResponse struct {
+	Token	string `json:"token"`
 }
 
 func Routes(router chi.Router) {
@@ -23,7 +27,6 @@ func Routes(router chi.Router) {
 
 func createMagicLink(w http.ResponseWriter, r *http.Request) {
 	var payload CreateMagicLinkPayload
-	buf := []byte{}
 
 	err := middleware.DecodeJsonRequestBody(w, r, &payload)
 	if err != nil {
@@ -37,16 +40,16 @@ func createMagicLink(w http.ResponseWriter, r *http.Request) {
 
 	token, err := token.GenerateMagicLink(payload.Email, r)
 	if err != nil {
-		w.WriteHeader(400)
-		res := fmt.Appendf(buf, "error verifying token: %v\n", err)
-		w.Write(res)
+		res := fmt.Sprintf("error verifying token: %v\n", err)
+		http.Error(w, res, http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(200)
-	res := fmt.Appendf(buf, "user id: %s\n", token)
-	w.Write(res)
+	middleware.WriteJsonResponse(w, http.StatusAccepted, "success", CreateMagicLinkResponse{
+		Token: token,
+	})
 }
+
 
 func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 	urlToken := chi.URLParam(r, "token")

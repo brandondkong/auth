@@ -24,7 +24,7 @@ func generateSecureToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token := base64.URLEncoding.EncodeToString(buffer)
+	token := base64.RawURLEncoding.EncodeToString(buffer)
 	return token, nil 
 }
 
@@ -76,7 +76,7 @@ func ConsumeMagicLink(token string) (*user.User, error) {
 	}
 
 	databaseSafeToken := base64.RawURLEncoding.EncodeToString(hash)
-
+	
 	// Query for hashed token against database
 	db, err := database.GetDatabase()
 	if err != nil {

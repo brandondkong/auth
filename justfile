@@ -2,7 +2,9 @@ build-api:
 	cd apps/api && just build
 
 build-web:
-	cd apps/web && bun build
+	cd apps/web && bun run build
+
+build: build-api build-web
 
 dev-api: build-api
     cd apps/api && ./main

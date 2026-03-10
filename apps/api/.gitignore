@@ -2,6 +2,6 @@
 !.env.example
 
 # Go builds
-./main
+main
 *.exe 
 *.out

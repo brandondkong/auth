@@ -13,3 +13,7 @@ dev-web:
 	cd apps/web && bun run dev
 
 dev: dev-web
+
+
+docker-up:
+    systemctl start docker && cd infra && docker-compose up

@@ -8,6 +8,7 @@
         "@types/bun": "latest",
       },
       "peerDependencies": {
+        "react": "^19.2.4",
         "typescript": "^5",
       },
     },
@@ -47,6 +48,8 @@
         "@types/bun": "latest",
       },
       "peerDependencies": {
+        "@types/react": ">=18",
+        "react": ">=18",
         "typescript": "^5",
       },
     },

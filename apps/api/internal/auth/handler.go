@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	"github.com/brandondkong/auth/internal/middleware"
 	"github.com/brandondkong/auth/internal/token"
@@ -47,7 +48,18 @@ func createMagicLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := token.GenerateMagicLink(payload.Email, r)
+	// Verify email
+	addr, err := mail.ParseAddress(payload.Email)
+	if err != nil {
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.INVALID_EMAIL_ERROR_CODE,
+				Message: "Invalid email address",
+			})
+		return
+	}
+
+	token, err := token.GenerateMagicLink(addr.Address, r)
 	if err != nil {
 		res := fmt.Sprintf("Error verifying token: %v\n", err)
 		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
@@ -86,5 +98,4 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 			Code:	http.StatusOK,
 			Data: user,
 		})
-
 }

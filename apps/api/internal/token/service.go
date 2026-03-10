@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -127,4 +128,19 @@ func ConsumeMagicLink(token string) (*user.User, error) {
 	})
 
 	return existingUser, err
+}
+
+func CleanupStaleTokens() error {
+	db, err := database.GetDatabase()
+	if err != nil {
+		return err
+	}
+
+	res := db.Unscoped().Where("expires_at < ? OR used = true", time.Now()).Delete(&MagicLinkToken{})
+	if res.Error != nil {
+		return res.Error
+	}
+	
+	log.Printf("cleaned up %d stale MagicLinkTokens\n", res.RowsAffected)
+	return nil
 }

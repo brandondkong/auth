@@ -15,6 +15,7 @@ import (
 	"github.com/brandondkong/auth/internal/user"
 	"github.com/brandondkong/auth/pkg/database"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-co-op/gocron/v2"
 )
@@ -51,6 +52,12 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	cors := cors.New(cors.Options{
+		AllowedOrigins: []string{"*", "0.0.0.0", "127.0.0.1"},
+	})
+
+	r.Use(cors.Handler)
+
 	auth.Routes(r)
 	
 	// Run cron jobs here

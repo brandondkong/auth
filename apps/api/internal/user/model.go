@@ -5,8 +5,8 @@ import (
 )
 
 type User struct {
-	database.Model
-	Email	string
+	database.Model	`gorm:"embedded"`
+	Email	string	`gorm:"unique;not null"`
 	Name	*string
 }
 

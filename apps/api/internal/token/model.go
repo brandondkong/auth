@@ -7,7 +7,7 @@ import (
 )
 
 type MagicLinkToken struct {
-	database.Model
+	database.Model			`gorm:"embedded"`
 	Email		string
 	Token		string		`gorm:"primaryKey"`
 	IPAddress	string

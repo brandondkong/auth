@@ -1,23 +1,41 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/brandondkong/auth/internal/middleware"
 	"github.com/brandondkong/auth/internal/token"
 	"github.com/go-chi/chi/v5"
 )
 
+type CreateMagicLinkPayload struct {
+	Email	string
+}
+
 func Routes(router chi.Router) {
 	r := chi.NewRouter()
-	r.Get("/magic-link", createMagicLink)
+	r.Post("/magic-link", createMagicLink)
 	r.Get("/magic-link/callback", consumeMagicLink)
 	router.Mount("/api/auth", r)
 }
 
 func createMagicLink(w http.ResponseWriter, r *http.Request) {
-	token, err := token.GenerateMagicLink("email", r)
+	var payload CreateMagicLinkPayload
 	buf := []byte{}
+
+	err := middleware.DecodeJsonRequestBody(w, r, &payload)
+	if err != nil {
+		var mr *middleware.ErrMalformedRequest
+		if errors.As(err, &mr) {
+			http.Error(w, mr.Error(), mr.Status())
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+
+	token, err := token.GenerateMagicLink(payload.Email, r)
 	if err != nil {
 		w.WriteHeader(400)
 		res := fmt.Appendf(buf, "error verifying token: %v\n", err)

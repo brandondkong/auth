@@ -1,0 +1,19 @@
+{
+  "name": "@auth/api-client",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "exports": {
+      ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "ky": "^1.14.3"
+  }
+}

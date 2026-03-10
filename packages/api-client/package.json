@@ -10,7 +10,9 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5",
+    "react": ">=18",
+    "@types/react": ">=18"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

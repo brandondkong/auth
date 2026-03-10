@@ -32,21 +32,38 @@ func createMagicLink(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var mr *middleware.ErrMalformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.Error(), mr.Status())
+			middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	mr.Status(),
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: mr.Error(),	
+			})
 		} else {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusInternalServerError,
+				Error: &middleware.INTERNAL_SERVER_ERROR_CODE,
+				Message: "Something went wrong",	
+			})
 		}
+		return
 	}
 
 	token, err := token.GenerateMagicLink(payload.Email, r)
 	if err != nil {
-		res := fmt.Sprintf("error verifying token: %v\n", err)
-		http.Error(w, res, http.StatusBadRequest)
+		res := fmt.Sprintf("Error verifying token: %v\n", err)
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: res,	
+			})
+
 		return
 	}
 
-	middleware.WriteJsonResponse(w, http.StatusAccepted, "success", CreateMagicLinkResponse{
-		Token: token,
+	middleware.WriteJsonResponse(w, middleware.ResponseOptions[CreateMagicLinkResponse]{
+		Code: http.StatusOK,
+		Data: CreateMagicLinkResponse{
+			Token: token,
+		},
 	})
 }
 
@@ -54,15 +71,20 @@ func createMagicLink(w http.ResponseWriter, r *http.Request) {
 func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 	urlToken := r.URL.Query().Get("token")
 	user, err := token.ConsumeMagicLink(urlToken)
-	buf := []byte{}
 
 	if err != nil {
-		w.WriteHeader(400)
-		res := fmt.Appendf(buf, "error verifying token: %v\n", err)
-		w.Write(res)
+		res := fmt.Sprintf("Error verifying token: %v", err)
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: res,	
+			})
 		return
 	}
-	w.WriteHeader(200)
-	res := fmt.Appendf(buf, "user id: %s\n", user.ID.String())
-	w.Write(res)
+
+	middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+			Code:	http.StatusOK,
+			Data: user,
+		})
+
 }

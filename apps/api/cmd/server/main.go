@@ -11,12 +11,13 @@ import (
 
 	"github.com/brandondkong/auth/internal/auth"
 	"github.com/brandondkong/auth/internal/config"
+	"github.com/brandondkong/auth/internal/jwt"
 	"github.com/brandondkong/auth/internal/token"
 	"github.com/brandondkong/auth/internal/user"
 	"github.com/brandondkong/auth/pkg/database"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-co-op/gocron/v2"
 )
 
@@ -44,7 +45,7 @@ func main() {
 	}
 
 	log.Println("Migrating database tables")
-	err = db.AutoMigrate(&user.User{}, token.MagicLinkToken{}, auth.RefreshToken{})
+	err = db.AutoMigrate(&user.User{}, token.MagicLinkToken{}, jwt.RefreshToken{})
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return
@@ -76,7 +77,7 @@ func main() {
 		),
 		gocron.NewTask(func() {
 			token.CleanupStaleTokens()
-			auth.CleanupStaleRefreshTokens()
+			jwt.CleanupStaleRefreshTokens()
 		}),
 		)
 

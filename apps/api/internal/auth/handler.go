@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/mail"
+	"time"
 
 	"github.com/brandondkong/auth/internal/middleware"
 	"github.com/brandondkong/auth/internal/token"
@@ -93,9 +94,32 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 			})
 		return
 	}
+	
+	// Generate a TokenPair for the user
+	tokenPair, err := CreateTokenPair(user)	
+	if err != nil {
+		res := fmt.Sprintf("Error creating token pair: %v", err)
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: res,	
+			})
+		return
+	}
+
+	// Set the cookie in the header
+	http.SetCookie(w, &http.Cookie{
+		Name: "refresh_token",
+		Value: tokenPair.Refresh,
+		HttpOnly: true,
+		Secure: false,
+		SameSite: http.SameSiteLaxMode,
+		Expires: time.Now().Add(RefreshTokenLifeTime),
+		Path: "/",
+	})
 
 	middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
 			Code:	http.StatusOK,
-			Data: user,
+			Data: tokenPair,
 		})
 }

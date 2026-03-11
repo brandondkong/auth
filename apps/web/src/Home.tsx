@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { generateMagicLink, useLazyApi } from '@auth/api-client';
+import { generateMagicLink, useLazyApi, verifyMagicLink } from '@auth/api-client';
 
 function Home() {
-     const [email, setEmail] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [token, setToken] = useState<string>("");
     const { refetch, loading, response } = useLazyApi(() => generateMagicLink(email), [email]);
+    const { refetch: refetchToken, response: responseToken } = useLazyApi(() => verifyMagicLink(token), [token]);
 
      return <div style={{
         display: 'flex',
@@ -22,6 +24,14 @@ function Home() {
             Test
         </button>
         { JSON.stringify(response) }
+        {
+            !loading ? <div>
+            <input value={token} onChange={ (e) => setToken(e.target.value)} placeholder="Token" />
+            <button onClick={refetchToken}>Verify Token</button>
+            { JSON.stringify(responseToken) }
+            </div>
+            : undefined
+        }
       </div>;
 }
 

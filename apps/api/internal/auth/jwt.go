@@ -15,12 +15,15 @@ import (
 )
 
 type TokenPair struct {
-	Refresh		string	`json:"refresh"`
+	Refresh		string	`json:"-"`
 	Access		string	`json:"access"`
 }
 
 var ErrUnknownClaimsType error = errors.New("unknown claims type")
 var ErrInvalidRefreshToken error = errors.New("invalid refresh token")
+
+const RefreshTokenLifeTime = time.Hour * 24
+const AccessTokenLifeTime = time.Minute * 15
 
 func CreateTokenPair(user *user.User) (*TokenPair, error) {
 	config, err := config.LoadConfigs()
@@ -28,12 +31,12 @@ func CreateTokenPair(user *user.User) (*TokenPair, error) {
 		return nil, err
 	}
 
-	refreshSignature, err := CreateRefreshToken(user)
+	refreshSignature, _, err := CreateRefreshToken(user)
 	if err != nil {
 		return nil, err
 	}
 
-	accessSignature, _, err := CreateJwtToken(user, config.JwtAccessSigningKey, time.Now().Add(time.Minute * 15))
+	accessSignature, _, err := CreateJwtToken(user, config.JwtAccessSigningKey, time.Now().Add(AccessTokenLifeTime))
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +63,7 @@ func CreateJwtToken(user *user.User, key string, expires time.Time) (string, uui
 				ID: tokenId.String(),
 			})
 
-	signed, err := token.SignedString(key)
+	signed, err := token.SignedString([]byte(key))
 	if err != nil {
 		return "", uuid.Nil, err
 	}
@@ -68,43 +71,42 @@ func CreateJwtToken(user *user.User, key string, expires time.Time) (string, uui
 	return signed, tokenId, nil
 }
 
-func CreateRefreshToken(user *user.User) (string, error) {
+func CreateRefreshToken(user *user.User) (string, uuid.UUID, error) {
 	config, err := config.LoadConfigs()
 	if err != nil {
-		return "", err
+		return "", uuid.Nil, err
 	}
 
-	expiration := time.Now().Add(time.Hour * 24)
+	expiration := time.Now().Add(RefreshTokenLifeTime)
 	signature, tokenId, err := CreateJwtToken(user, config.JwtRefreshSigningKey, expiration) 
 	if err != nil {
-		return "", err
+		return "", uuid.Nil, err
 	}
 
 	// Save this into the database
 	db, err := database.GetDatabase()
 	if err != nil {
-		return "", err
+		return "", uuid.Nil, err
 	}
 	
 	// Hash the token ID
 	hashedId, err := token.HashString(tokenId.String())
 	if err != nil {
-		return "", err
+		return "", uuid.Nil, err
 	}
 
 	var refreshToken RefreshToken = RefreshToken{
 		ExpiresAt: expiration,
-		User:	*user,
 		UserId: user.ID,
 		TokenId: string(hashedId),
 	}
 
 	err = db.Create(&refreshToken).Error
 	if err != nil {
-		return "", err
+		return "", uuid.Nil, err
 	}
 	
-	return signature, nil
+	return signature, tokenId, nil
 }
 
 func RefreshTokens(tkn string) (*TokenPair, error) {

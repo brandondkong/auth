@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	"github.com/brandondkong/auth/internal/auth"
-	"github.com/brandondkong/auth/internal/config"
 	"github.com/brandondkong/auth/internal/jwt"
 	"github.com/brandondkong/auth/internal/token"
 	"github.com/brandondkong/auth/internal/user"
@@ -30,22 +29,15 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("Reading environment variables")
-	configs, err := config.LoadConfigs()
-	if err != nil {
-		log.Fatalf("error: %v\n", err)
-		return
-	}
-
 	log.Println("Starting database")
-	db, err := database.StartDatabase(configs)
+	_, err := database.StartDatabase()
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return
 	}
 
 	log.Println("Migrating database tables")
-	err = db.AutoMigrate(&user.User{}, &token.MagicLinkToken{}, &jwt.RefreshToken{}, &user.OAuthAccount{})
+	err = database.Migrate(&user.User{}, &user.OAuthAccount{}, &token.MagicLinkToken{}, &jwt.RefreshToken{})
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return
@@ -54,7 +46,8 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	cors := cors.New(cors.Options{
-		AllowedOrigins: []string{"*", "0.0.0.0", "127.0.0.1"},
+		AllowedOrigins: []string{"127.0.0.1"},
+		AllowCredentials: true,
 	})
 
 	r.Use(cors.Handler)
@@ -76,8 +69,15 @@ func main() {
 			),
 		),
 		gocron.NewTask(func() {
-			token.CleanupStaleTokens()
-			jwt.CleanupStaleRefreshTokens()
+			err := token.CleanupStaleTokens()
+			if err != nil {
+				log.Printf("error cleaning tokens: %v\n", err)
+			}
+			err = jwt.CleanupStaleRefreshTokens()
+			if err != nil {
+				log.Printf("error cleaning refresh tokens: %v\n", err)
+			}
+
 		}),
 		)
 
@@ -90,9 +90,18 @@ func main() {
 	scheduler.Start()
 
 	log.Printf("Starting server on port %d\n", PORT)
-	go http.ListenAndServe(fmt.Sprintf(":%d", PORT), r)
 
-	<- sigChan
+	serverErr := make(chan error, 1)
+	go func() {
+		serverErr <- http.ListenAndServe(fmt.Sprintf(":%d", PORT), r)
+	}()
+
+	select {
+	case err := <-serverErr:
+		log.Fatalf("server error: %v\n", err)
+	case <-sigChan:
+	}
+
 	log.Println("Shutting down cron jobs")
 	err = scheduler.Shutdown()
 	if err != nil {

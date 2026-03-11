@@ -44,7 +44,7 @@ func main() {
 	}
 
 	log.Println("Migrating database tables")
-	err = db.AutoMigrate(&user.User{}, token.MagicLinkToken{})
+	err = db.AutoMigrate(&user.User{}, token.MagicLinkToken{}, auth.RefreshToken{})
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return
@@ -74,7 +74,10 @@ func main() {
 				gocron.NewAtTime(3, 0, 0),
 			),
 		),
-		gocron.NewTask(token.CleanupStaleTokens),
+		gocron.NewTask(func() {
+			token.CleanupStaleTokens()
+			auth.CleanupStaleRefreshTokens()
+		}),
 		)
 
 	if err != nil {

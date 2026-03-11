@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/brandondkong/auth/internal/config"
-	"github.com/brandondkong/auth/internal/token"
 	"github.com/brandondkong/auth/internal/user"
+	"github.com/brandondkong/auth/pkg/cryptoutil"
 	"github.com/brandondkong/auth/pkg/database"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -78,7 +78,7 @@ func CreateRefreshToken(user *user.User) (string, uuid.UUID, error) {
 	}
 	
 	// Hash the token ID
-	hashedId, err := token.HashString(tokenId.String())
+	hashedId, err := cryptoutil.HashString(tokenId.String())
 	if err != nil {
 		return "", uuid.Nil, err
 	}
@@ -112,7 +112,7 @@ func RotateTokens(tkn string) (*TokenPair, error) {
 	} else if claims, ok := parsed.Claims.(*jwt.RegisteredClaims); ok {
 		// OKAY
 		// From the JTI,
-		hashed, err := token.HashString(claims.ID)
+		hashed, err := cryptoutil.HashString(claims.ID)
 		if err != nil {
 			return nil, err
 		}

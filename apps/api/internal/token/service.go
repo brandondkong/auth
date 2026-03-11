@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/brandondkong/auth/internal/user"
-	cryptoutil "github.com/brandondkong/auth/pkg/cruptoutil"
+	"github.com/brandondkong/auth/pkg/cryptoutil"
 	"github.com/brandondkong/auth/pkg/database"
 	"gorm.io/gorm"
 )

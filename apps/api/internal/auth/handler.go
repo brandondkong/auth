@@ -115,7 +115,7 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure: false,
 		SameSite: http.SameSiteLaxMode,
-		Expires: time.Now().Add(RefreshTokenLifeTime),
+		Expires: time.Now().Add(jwt.RefreshTokenLifeTime),
 		Path: "/",
 	})
 

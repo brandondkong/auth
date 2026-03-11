@@ -9,17 +9,13 @@ import (
 	"time"
 
 	"github.com/brandondkong/auth/internal/user"
+	cryptoutil "github.com/brandondkong/auth/pkg/cruptoutil"
 	"github.com/brandondkong/auth/pkg/database"
 	"gorm.io/gorm"
 )
 
-const numBytesInMagicLink uint = 32
-const magicLinkExpiryDurationHours uint = 24
-
-var ErrInvalidToken error = errors.New("invalid token")
-
 func generateSecureToken() (string, error) {
-	buffer := make([]byte, numBytesInMagicLink)
+	buffer := make([]byte, NumBytesInMagicLink)
 	_, err := rand.Read(buffer)
 	if err != nil {
 		return "", err
@@ -34,7 +30,7 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 		return "", err
 	}
 
-	databaseSafeToken, err := HashString(token)
+	databaseSafeToken, err := cryptoutil.HashString(token)
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +40,7 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 		UserAgent: request.UserAgent(),
 		IPAddress: request.Host,
 		Token:		databaseSafeToken,
-		ExpiresAt: time.Now().Add(time.Hour * time.Duration(magicLinkExpiryDurationHours)),
+		ExpiresAt: time.Now().Add(MagicLinkExpiryDuration),
 	}
 
 	db, err := database.GetDatabase()
@@ -61,7 +57,7 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 }
 
 func ConsumeMagicLink(token string) (*user.User, error) {
-	databaseSafeToken, err := HashString(token)
+	databaseSafeToken, err := cryptoutil.HashString(token)
 	if err != nil {
 		return nil, err
 	}

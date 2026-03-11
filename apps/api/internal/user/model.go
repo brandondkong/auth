@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/brandondkong/auth/pkg/database"
+	"github.com/google/uuid"
 )
 
 type User struct {
@@ -11,5 +12,16 @@ type User struct {
 }
 
 func (u User) TableName() string {
-	return "user"
+	return "users"
+}
+
+type OAuthAccount struct {
+	User		User	`gorm:"foreignKey:UserId"`
+	UserId		uuid.UUID	`gorm:"primaryKey"`
+	Provider	string		`gorm:"primaryKey"`
+	ProviderId	string
+}
+
+func (a OAuthAccount) TableName() string {
+	return "oauth_accounts"
 }

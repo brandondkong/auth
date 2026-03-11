@@ -7,6 +7,7 @@ import (
 	"net/mail"
 	"time"
 
+	"github.com/brandondkong/auth/internal/jwt"
 	"github.com/brandondkong/auth/internal/middleware"
 	"github.com/brandondkong/auth/internal/token"
 	"github.com/go-chi/chi/v5"
@@ -96,7 +97,7 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Generate a TokenPair for the user
-	tokenPair, err := CreateTokenPair(user)	
+	tokenPair, err := jwt.CreateTokenPair(user)	
 	if err != nil {
 		res := fmt.Sprintf("Error creating token pair: %v", err)
 		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{

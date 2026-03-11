@@ -7,13 +7,16 @@ build-web:
 build: build-api build-web
 
 dev-api: build-api
-    cd apps/api && ./main
+    cd apps/api && just dev
 
 dev-web:
 	cd apps/web && bun run dev
 
-dev: dev-web
-
+dev: docker-up dev-web dev-api
 
 docker-up:
-    systemctl start docker && cd infra && docker-compose up
+    cd infra && docker-compose up
+
+docker-down:
+    cd infra && docker-compose down
+

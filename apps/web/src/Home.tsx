@@ -12,9 +12,10 @@ function Home() {
      return <div style={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent:'center',
-        alignItems:'center'
+        justifyContent:'start',
+        height: '100vh'
       }}>
+        
         { loading ? "Loading" : undefined }
         <h1>Welcome to react router dom and Query!</h1>
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />

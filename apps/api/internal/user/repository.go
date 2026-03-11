@@ -8,8 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrUserNotFound error = errors.New("user not found")
-
 func GetUserById(id uuid.UUID, tx *gorm.DB) (*User, error) {
 	var db *gorm.DB = tx
 	var err error

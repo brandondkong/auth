@@ -1,2 +1,5 @@
 build:
-    go build cmd/server/main.go
+    go build -o ./tmp/main ./cmd/server 
+
+dev:
+    air -c .air.toml

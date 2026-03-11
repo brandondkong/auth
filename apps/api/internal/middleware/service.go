@@ -9,17 +9,15 @@ import (
 	"strings"
 )
 
-type ErrMalformedRequest struct {
-	status	int
-	message	string
-}
-
-func (err *ErrMalformedRequest) Error() string {
-	return err.message
-}
-
-func (err *ErrMalformedRequest) Status() int {
-	return err.status
+func WriteJsonResponse[T any](w http.ResponseWriter, options ResponseOptions[T]) {
+	w.Header().Set("Content-Type", "application")
+	w.WriteHeader(options.Code)
+	json.NewEncoder(w).Encode(JsonResponse[T]{
+		Success: options.Error == nil,
+		Error: options.Error,
+		Message: options.Message,
+		Data: options.Data,
+	})
 }
 
 func DecodeJsonRequestBody[K any](w http.ResponseWriter, r *http.Request, payload *K) error {

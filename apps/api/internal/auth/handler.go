@@ -13,14 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type CreateMagicLinkPayload struct {
-	Email	string	`json:"email"`
-}
-
-type CreateMagicLinkResponse struct {
-	Token	string `json:"token"`
-}
-
 func Routes(router chi.Router) {
 	r := chi.NewRouter()
 	r.Post("/magic-link", createMagicLink)
@@ -110,7 +102,7 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 
 	// Set the cookie in the header
 	http.SetCookie(w, &http.Cookie{
-		Name: "refresh_token",
+		Name: "refresh",
 		Value: tokenPair.Refresh,
 		HttpOnly: true,
 		Secure: false,

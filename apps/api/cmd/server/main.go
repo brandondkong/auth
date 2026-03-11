@@ -45,7 +45,7 @@ func main() {
 	}
 
 	log.Println("Migrating database tables")
-	err = db.AutoMigrate(&user.User{}, token.MagicLinkToken{}, jwt.RefreshToken{})
+	err = db.AutoMigrate(&user.User{}, &token.MagicLinkToken{}, &jwt.RefreshToken{}, &user.OAuthAccount{})
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return

@@ -5,20 +5,30 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type DatabaseConfig struct {
-	DatabaseUrl		string		`env:"DATABASE_URL"`
+type Config struct {
+	DatabaseUrl				string		`env:"DATABASE_URL"`
+	JwtRefreshSigningKey	string		`env:"JWT_REFRESH_SIGNING_KEY"`
+	JwtAccessSigningKey		string		`env:"JWT_ACCESS_SIGNING_KEY"`
 }
 
-func LoadConfigs() (DatabaseConfig, error) {
+var configs *Config
+
+// Singleton
+func LoadConfigs() (Config, error) {
+	if configs != nil {
+		return *configs, nil
+	}
+
 	err := godotenv.Load(".env")
 	if err != nil {
-		return DatabaseConfig{}, err
+		return Config{}, err
 	}
 
-	var config DatabaseConfig
+	var config Config
 	if err := env.Parse(&config); err != nil {
-		return DatabaseConfig{}, err
+		return Config{}, err
 	}
 
+	configs = &config
 	return config, nil
 }

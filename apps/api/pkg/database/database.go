@@ -10,7 +10,7 @@ import (
 
 var db *gorm.DB
 
-func StartDatabase(configs config.DatabaseConfig) (*gorm.DB, error) {
+func StartDatabase(configs config.Config) (*gorm.DB, error) {
 	if db != nil {
 		return nil, nil
 	}

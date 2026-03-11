@@ -2,7 +2,6 @@ package token
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"log"
@@ -29,26 +28,17 @@ func generateSecureToken() (string, error) {
 	return token, nil 
 }
 
-func hashSecureToken(token string) ([]byte, error) {
-	hash := sha256.New()
-	hash.Write([]byte(token))
-
-	return hash.Sum(nil), nil
-}
-
 func GenerateMagicLink(email string, request *http.Request) (string, error) {
 	token, err := generateSecureToken()
 	if err != nil {
 		return "", err
 	}
 
-	hash, err := hashSecureToken(token)
+	databaseSafeToken, err := HashString(token)
 	if err != nil {
 		return "", err
 	}
 
-	databaseSafeToken := base64.RawURLEncoding.EncodeToString(hash)
-	
 	magicLinkToken := MagicLinkToken{
 		Email:		email,
 		UserAgent: request.UserAgent(),
@@ -71,13 +61,11 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 }
 
 func ConsumeMagicLink(token string) (*user.User, error) {
-	hash, err := hashSecureToken(token)
+	databaseSafeToken, err := HashString(token)
 	if err != nil {
 		return nil, err
 	}
 
-	databaseSafeToken := base64.RawURLEncoding.EncodeToString(hash)
-	
 	// Query for hashed token against database
 	db, err := database.GetDatabase()
 	if err != nil {

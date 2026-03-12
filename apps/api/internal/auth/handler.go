@@ -13,11 +13,30 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func Routes(router chi.Router) {
+func Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/magic-link", createMagicLink)
 	r.Get("/magic-link/callback", consumeMagicLink)
-	router.Mount("/api/auth", r)
+	r.Get("/refresh", rotateTokens)
+	return r
+}
+
+func setTokenPairCookie(w http.ResponseWriter, tokenPair *jwt.TokenPair) {
+	// Set the cookie in the header
+	http.SetCookie(w, &http.Cookie{
+		Name: jwt.RefreshTokenCookie,
+		Value: tokenPair.Refresh,
+		HttpOnly: true,
+		Secure: false,
+		SameSite: http.SameSiteLaxMode,
+		Expires: time.Now().Add(jwt.RefreshTokenLifeTime),
+		Path: "/",
+	})
+
+	middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+			Code:	http.StatusOK,
+			Data: tokenPair,
+		})
 }
 
 func createMagicLink(w http.ResponseWriter, r *http.Request) {
@@ -101,18 +120,31 @@ func consumeMagicLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set the cookie in the header
-	http.SetCookie(w, &http.Cookie{
-		Name: "refresh",
-		Value: tokenPair.Refresh,
-		HttpOnly: true,
-		Secure: false,
-		SameSite: http.SameSiteLaxMode,
-		Expires: time.Now().Add(jwt.RefreshTokenLifeTime),
-		Path: "/",
-	})
+	setTokenPairCookie(w, tokenPair)
+}
 
-	middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
-			Code:	http.StatusOK,
-			Data: tokenPair,
-		})
+func rotateTokens(w http.ResponseWriter, r *http.Request) {
+	refresh, err := r.Cookie(jwt.RefreshTokenCookie)
+	if err != nil {
+		res := fmt.Sprintf("Error retrieving refresh token cookie: %v", err)
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: res,	
+			})
+		return
+	}
+
+	tokenPair, err := jwt.RotateTokens(refresh.Value)
+	if err != nil {
+		res := fmt.Sprintf("Error rotating tokens: %v", err)
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+				Code:	http.StatusBadRequest,
+				Error: &middleware.BAD_REQUEST_ERROR_CODE,
+				Message: res,	
+			})
+		return
+	}
+	
+	setTokenPairCookie(w, tokenPair)
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/brandondkong/auth/internal/auth"
 	"github.com/brandondkong/auth/internal/jwt"
+	"github.com/brandondkong/auth/internal/models"
 	"github.com/brandondkong/auth/internal/token"
 	"github.com/brandondkong/auth/internal/user"
 	"github.com/brandondkong/auth/pkg/database"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	log.Println("Migrating database tables")
-	err = database.Migrate(&user.User{}, &user.OAuthAccount{}, &token.MagicLinkToken{}, &jwt.RefreshToken{})
+	err = database.Migrate(&models.User{}, &models.OAuthAccount{}, &models.MagicLinkToken{}, &models.RefreshToken{})
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 		return
@@ -52,7 +53,10 @@ func main() {
 
 	r.Use(cors.Handler)
 
-	auth.Routes(r)
+	r.Group(func(r chi.Router) {
+		r.Mount("/auth", auth.Routes())
+	})
+	r.Mount("/user", user.Routes())
 	
 	// Run cron jobs here
 	scheduler, err := gocron.NewScheduler()

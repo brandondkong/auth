@@ -11,10 +11,10 @@ type Migratable interface {
 }
 
 type Model struct {
-	ID			uuid.UUID		`gorm:"primaryKey"`
-	CreatedAt 	time.Time		`gorm:"autoCreateTime"`
-	UpdatedAt 	time.Time		`gorm:"autoUpdateTime:milli"`
-	DeletedAt 	gorm.DeletedAt 	`gorm:"index"`
+	ID			uuid.UUID		`gorm:"primaryKey" json:"id"`
+	CreatedAt 	time.Time		`gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt 	time.Time		`gorm:"autoUpdateTime:milli" json:"updated_at"`
+	DeletedAt 	gorm.DeletedAt 	`gorm:"index" json:"deleted_at"`
 }
 
 func (m *Model) BeforeCreate(tx *gorm.DB) (err error) {

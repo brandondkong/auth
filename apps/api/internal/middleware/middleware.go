@@ -11,14 +11,25 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetUserId(r *http.Request) (uuid.UUID, error) {
+func GetUserId(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	userId, ok := r.Context().Value(UserIdKey).(string)
 	if !ok {
+		WriteJsonResponse(w, ResponseOptions[any]{
+			Code: http.StatusUnauthorized,
+			Error: &UNAUTHORIZED_ERROR_CODE,
+			Message: "Failed to retrieve user ID",
+		})
+
 		return uuid.Nil, errors.New("could not find user ID")
 	}
 
 	parsed, err := uuid.Parse(userId)
 	if err != nil {
+		WriteJsonResponse(w, ResponseOptions[any]{
+			Code: http.StatusUnauthorized,
+			Error: &UNAUTHORIZED_ERROR_CODE,
+			Message: "Failed to parse user ID",
+		})
 		return uuid.Nil, err
 	}
 
@@ -34,7 +45,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			WriteJsonResponse(w, ResponseOptions[any]{
 				Code:	http.StatusUnauthorized,
 				Error: &UNAUTHORIZED_ERROR_CODE,
-				Message: "Could not find authorization key in header",	
+				Message: "Failed to retrieve authorization key in header",	
 			})
 			
 			return
@@ -48,7 +59,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			WriteJsonResponse(w, ResponseOptions[any]{
 				Code:	http.StatusUnauthorized,
 				Error: &UNAUTHORIZED_ERROR_CODE,
-				Message: "Could not load signing key",	
+				Message: "Failed to load signing key",	
 			})
 
 			return
@@ -71,7 +82,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			WriteJsonResponse(w, ResponseOptions[any]{
 				Code:	http.StatusUnauthorized,
 				Error: &UNAUTHORIZED_ERROR_CODE,
-				Message: "Could not retrieve user ID from JWT claim",	
+				Message: "Failed to retrieve user ID from JWT claim",	
 			})
 			
 			return

@@ -53,10 +53,8 @@ func main() {
 
 	r.Use(cors.Handler)
 
-	r.Group(func(r chi.Router) {
-		r.Mount("/auth", auth.Routes())
-	})
-	r.Mount("/user", user.Routes())
+	r.Mount("/api/auth", auth.Routes())
+	r.Mount("/api/user", user.Routes())
 	
 	// Run cron jobs here
 	scheduler, err := gocron.NewScheduler()

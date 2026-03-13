@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from 'react';
-import { generateMagicLink, useLazyApi, verifyMagicLink } from '@auth/api-client';
+import { generateMagicLink, getUser, useApi, useLazyApi, verifyMagicLink } from '@auth/api-client';
 
 function Home() {
+    console.log("TEST");
+    const { response: responseUser } = useApi(() => getUser());
     const [email, setEmail] = useState<string>("");
     const [token, setToken] = useState<string>("");
     const { refetch, loading, response } = useLazyApi(() => generateMagicLink(email), [email]);
@@ -16,6 +18,7 @@ function Home() {
         height: '100vh'
       }}>
         
+        { JSON.stringify(responseUser) ?? "No user" }
         { loading ? "Loading" : undefined }
         <h1>Welcome to react router dom and Query!</h1>
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />

@@ -7,8 +7,8 @@ import (
 
 type User struct {
 	database.Model	`gorm:"embedded"`
-	Email	string	`gorm:"unique;not null"`
-	Name	*string
+	Email	string	`gorm:"unique;not null" json:"email"`
+	Name	*string `json:"name"`
 }
 
 func (u User) TableName() string {

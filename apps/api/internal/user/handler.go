@@ -9,18 +9,24 @@ import (
 
 func Routes() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/user", getUser)
+	r.Use(middleware.AuthMiddleware)
+	r.Get("/", getUser)
 	return r
 }
 
 func getUser(w http.ResponseWriter, req *http.Request) {
-	userId, err := middleware.GetUserId(req)
+	userId, err := middleware.GetUserId(w, req)
 	if err != nil {
 		return
 	}
 
 	user, err := GetUserById(userId, nil)
 	if err != nil {
+		middleware.WriteJsonResponse(w, middleware.ResponseOptions[any]{
+			Code: http.StatusBadRequest,
+			Error: &USER_NOT_FOUND_ERROR_CODE,
+			Message: "User does not exist",
+		})
 		return
 	}
 

@@ -1,10 +1,11 @@
 import ky from "ky";
 import type { ApiResponse } from "../types/response";
 
+export const api = ky.create({
+    prefixUrl: import.meta.env.BACKEND_URL ?? "/api",
+});
+
 export function createApi(onAuthFailure: () => void) {
-    const api = ky.create({
-        prefixUrl: import.meta.env.BACKEND_URL ?? "/api",
-    });
     async function rotateTokens(): Promise<ApiResponse<{ access: string }>> {
        return api.get("/auth/refresh").json<ApiResponse<{ access: string }>>();
     }

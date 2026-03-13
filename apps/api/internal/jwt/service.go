@@ -5,15 +5,17 @@ import (
 	"time"
 
 	"github.com/brandondkong/auth/internal/config"
+	"github.com/brandondkong/auth/internal/models"
 	"github.com/brandondkong/auth/internal/user"
 	"github.com/brandondkong/auth/pkg/cryptoutil"
 	"github.com/brandondkong/auth/pkg/database"
+	"github.com/brandondkong/auth/pkg/jwtutil"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func CreateTokenPair(user *user.User) (*TokenPair, error) {
+func CreateTokenPair(user *models.User) (*TokenPair, error) {
 	config, err := config.LoadConfigs()
 	if err != nil {
 		return nil, err
@@ -37,7 +39,7 @@ func CreateTokenPair(user *user.User) (*TokenPair, error) {
 	return &tokenPair, nil
 }
 
-func CreateJwtToken(user *user.User, key string, expires time.Time) (string, uuid.UUID, error) {
+func CreateJwtToken(user *models.User, key string, expires time.Time) (string, uuid.UUID, error) {
 	tokenId := uuid.New()
 	expiresAt := jwt.NewNumericDate(expires)
 
@@ -59,7 +61,7 @@ func CreateJwtToken(user *user.User, key string, expires time.Time) (string, uui
 	return signed, tokenId, nil
 }
 
-func CreateRefreshToken(user *user.User) (string, uuid.UUID, error) {
+func CreateRefreshToken(user *models.User) (string, uuid.UUID, error) {
 	config, err := config.LoadConfigs()
 	if err != nil {
 		return "", uuid.Nil, err
@@ -83,7 +85,7 @@ func CreateRefreshToken(user *user.User) (string, uuid.UUID, error) {
 		return "", uuid.Nil, err
 	}
 
-	var refreshToken RefreshToken = RefreshToken{
+	var refreshToken models.RefreshToken = models.RefreshToken{
 		ExpiresAt: expiration,
 		UserId: user.ID,
 		TokenId: string(hashedId),
@@ -98,15 +100,12 @@ func CreateRefreshToken(user *user.User) (string, uuid.UUID, error) {
 }
 
 func RotateTokens(tkn string) (*TokenPair, error) {
-	parsed, err := jwt.ParseWithClaims(tkn, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
-		configs, err := config.LoadConfigs()
-		if err != nil {
-			return nil, err
-		}
+	configs, err := config.LoadConfigs()
+	if err != nil {
+		return nil, err
+	}
 
-		return []byte(configs.JwtRefreshSigningKey), nil
-	})
-	
+	parsed, err := jwtutil.ParseToken(tkn, configs.JwtRefreshSigningKey)	
 	if err != nil {
 		return nil, err
 	} else if claims, ok := parsed.Claims.(*jwt.RegisteredClaims); ok {
@@ -122,7 +121,7 @@ func RotateTokens(tkn string) (*TokenPair, error) {
 			return nil, err
 		}
 
-		var refresh RefreshToken
+		var refresh models.RefreshToken
 
 		err = db.Transaction(func(tx *gorm.DB) error {
 			res := tx.Model(&refresh).Where("token_id = ? AND expires_at > ? AND revoked = false", hashed, time.Now()).Updates(map[string]any{
@@ -136,7 +135,7 @@ func RotateTokens(tkn string) (*TokenPair, error) {
 			}
 
 			// Find
-			err := tx.Preload("User").Where("token_id = ?", hashed).Find(&refresh).Error
+			err := tx.Where("token_id = ?", hashed).Find(&refresh).Error
 			if err != nil {
 				return err
 			}
@@ -150,7 +149,12 @@ func RotateTokens(tkn string) (*TokenPair, error) {
 
 		// At this point, refresh is valid
 		// Create a new TokenPair and return it
-		tokenPair, err := CreateTokenPair(&refresh.User)
+		u, err := user.GetUserById(refresh.UserId, db)
+		if err != nil {
+			return nil, err
+		}
+
+		tokenPair, err := CreateTokenPair(u)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +171,7 @@ func CleanupStaleRefreshTokens() error {
 		return err
 	}
 
-	res := db.Unscoped().Where("expires_at < ? OR revoked = true", time.Now()).Delete(&RefreshToken{})
+	res := db.Unscoped().Where("expires_at < ? OR revoked = true", time.Now()).Delete(&models.RefreshToken{})
 	if res.Error != nil {
 		return res.Error
 	}

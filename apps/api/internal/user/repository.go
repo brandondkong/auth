@@ -3,12 +3,13 @@ package user
 import (
 	"errors"
 
+	"github.com/brandondkong/auth/internal/models"
 	"github.com/brandondkong/auth/pkg/database"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func GetUserById(id uuid.UUID, tx *gorm.DB) (*User, error) {
+func GetUserById(id uuid.UUID, tx *gorm.DB) (*models.User, error) {
 	var db *gorm.DB = tx
 	var err error
 
@@ -19,7 +20,7 @@ func GetUserById(id uuid.UUID, tx *gorm.DB) (*User, error) {
 		}
 	}
 	
-	var existing User
+	var existing models.User
 	if err = db.Where("id = ?", id).First(&existing).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
@@ -30,7 +31,7 @@ func GetUserById(id uuid.UUID, tx *gorm.DB) (*User, error) {
 	return &existing, nil
 }
 
-func GetUserByEmail(email string, tx *gorm.DB) (*User, error) {
+func GetUserByEmail(email string, tx *gorm.DB) (*models.User, error) {
 	var db *gorm.DB = tx
 	var err error
 
@@ -41,7 +42,7 @@ func GetUserByEmail(email string, tx *gorm.DB) (*User, error) {
 		}
 	}
 	
-	var existing User
+	var existing models.User
 	if err = db.Where("email = ?", email).First(&existing).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
@@ -52,7 +53,7 @@ func GetUserByEmail(email string, tx *gorm.DB) (*User, error) {
 	return &existing, nil
 }
 
-func CreateUser(email string, tx *gorm.DB) (*User, error) {
+func CreateUser(email string, tx *gorm.DB) (*models.User, error) {
 	var db *gorm.DB = tx
 	var err error
 
@@ -65,7 +66,7 @@ func CreateUser(email string, tx *gorm.DB) (*User, error) {
 	
 	// TODO: validate email
 
-	user := &User{
+	user := &models.User{
 		Email:		email,
 	}
 

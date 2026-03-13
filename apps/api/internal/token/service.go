@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/brandondkong/auth/internal/models"
 	"github.com/brandondkong/auth/internal/user"
 	"github.com/brandondkong/auth/pkg/cryptoutil"
 	"github.com/brandondkong/auth/pkg/database"
@@ -35,7 +36,7 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 		return "", err
 	}
 
-	magicLinkToken := MagicLinkToken{
+	magicLinkToken := models.MagicLinkToken{
 		Email:		email,
 		UserAgent: request.UserAgent(),
 		IPAddress: request.Host,
@@ -56,7 +57,7 @@ func GenerateMagicLink(email string, request *http.Request) (string, error) {
 	return token, nil
 }
 
-func ConsumeMagicLink(token string) (*user.User, error) {
+func ConsumeMagicLink(token string) (*models.User, error) {
 	databaseSafeToken, err := cryptoutil.HashString(token)
 	if err != nil {
 		return nil, err
@@ -68,9 +69,9 @@ func ConsumeMagicLink(token string) (*user.User, error) {
 		return nil, err
 	}
 
-	magicLinkToken := MagicLinkToken{}
+	magicLinkToken := models.MagicLinkToken{}
 
-	var existingUser *user.User
+	var existingUser *models.User
 
 	// Wrap in a transaction
 	err = db.Transaction(func(tx *gorm.DB) error {
@@ -120,7 +121,7 @@ func CleanupStaleTokens() error {
 		return err
 	}
 
-	res := db.Unscoped().Where("expires_at < ? OR used = true", time.Now()).Delete(&MagicLinkToken{})
+	res := db.Unscoped().Where("expires_at < ? OR used = true", time.Now()).Delete(&models.MagicLinkToken{})
 	if res.Error != nil {
 		return res.Error
 	}

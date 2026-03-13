@@ -10,7 +10,8 @@ export interface ExtendedApiResponse<T extends {} = {}> {
 }
 
 export function useApi<T extends {} = {}>(
-    callback: () => Promise<ApiResponse<T>>
+    callback: () => Promise<ApiResponse<T>>,
+    dependencies?: any[]
 ): ExtendedApiResponse<T> {
     const [loading, setLoading] = useState<boolean>(true);
     const [fetchError, setFetchError] = useState<string | undefined>(undefined);
@@ -31,7 +32,7 @@ export function useApi<T extends {} = {}>(
 
     useEffect(() => {
         fetch();
-    }, []);
+    }, dependencies ?? []);
 
     return { loading, fetchError, response, refetch: fetch };
 }

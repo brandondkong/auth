@@ -1,13 +1,10 @@
-package token
+package models
 
 import (
 	"time"
-
-	"github.com/brandondkong/auth/pkg/database"
 )
 
 type MagicLinkToken struct {
-	database.Model			`gorm:"embedded"`
 	Email		string
 	Token		string		`gorm:"primaryKey"`
 	IPAddress	string
@@ -16,3 +13,4 @@ type MagicLinkToken struct {
 	UsedAt		time.Time
 	ExpiresAt	time.Time
 }
+

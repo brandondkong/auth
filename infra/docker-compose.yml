@@ -1,15 +1,28 @@
 services:
+  backend:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    working_dir: /app
+    volumes:
+      - ../apps/api:/app
+      - go-mod-cache:/go/pkg/mod
+    ports:
+      - "5000:5000"
+
   db:
     image: 'postgres:18.3-alpine'
-
     ports:
       - 5432:5432
-    
     env_file:
       - .env
-
     environment:
       POSTGRES_DB: auth
-    
     volumes:
-      - /var/lib/postgresql/data/
+      - postgres-data:/var/lib/postgresql/data/
+    
+volumes:
+  go-mod-cache:
+  postgres-data:

@@ -12,7 +12,7 @@ dev-api: build-api
 dev-web:
 	cd apps/web && bun run dev
 
-dev: docker-up dev-web dev-api
+dev: docker-up
 
 docker-up:
     cd infra && docker-compose up
